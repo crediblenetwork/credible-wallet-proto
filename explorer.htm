@@ -1,0 +1,113 @@
+﻿<!DOCTYPE HTML>
+<!--
+    Credible Explorer v0.1
+    Created by Thorsten Neumann and Bao Trung
+    Experimental code. Use with care. Prototype
+-->
+<html>
+    <head>
+        <title>SmartPesa Credible Explorer</title>
+        <script type="text/javascript" src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/bigchaindb-driver@4.0.0/dist/browser/bigchaindb-driver.window.min.js"></script>
+    </head>
+    <body>
+        <h1 style="margin-bottom:-8px;">SmartPesa Credible</h1>
+        <a href="www.smartpesa.io"><small>www.smartpesa.io</small></a>
+
+        <h3>Wallet Generator</h3>
+        Private Key: <input type="text" id="key_private" size="55" value="8p8sk3ZQ2XKwp7PTSxDSC99j33pdo48Z8g6AJE5fF5An"/><br/>
+        Public Key:&nbsp; <input type="text" id="key_public" size="50" value="9U95xGb6E2hendFE2F4aGvX5vrepYrht8LFjkVyaazdM"/>
+    
+        <p />
+        <input type="button" id="submit" value="Generate New" onclick="JavaScript:onGenerate()" />
+
+        <h3>Data Post</h3>
+
+        <select name="schema">
+            <option value="business">business</option>
+            <option value="address">address</option>
+        </select>
+        <select id="type">
+            <option value="business.name">business.name</option>
+            <option value="business.registered_name">business.registered_name</option>
+            <option value="business.trading_name">business.trading_name</option>
+            <option value="business.tax.code">business.tax.code</option>
+            <option value="business.tax.enrol_date">business.tax.enrol_date</option>
+        </select>
+        <input type="text" id="claim" size="30" value="Founders Bakuteh"/>
+        
+        <p/>
+        <input type="button" id="submit" value="Post" onclick="JavaScript:onSubmit()"/>
+
+        <script>
+            const key_private = document.getElementById('key_private');
+            const key_public = document.getElementById('key_public');
+
+            function onGenerate() {
+                const merchant = new BigchainDB.Ed25519Keypair();
+                key_private.value = merchant.privateKey;
+                key_public.value = merchant.publicKey;
+            }
+        </script>
+
+        <script>
+            function onSubmit() {
+
+                // Example 128-bit. Need revision 192 or 256. Generated or derived
+                var nonce = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+                var nonce_hex = aesjs.utils.hex.fromBytes(nonce);
+
+                const claim = document.getElementById('claim');
+                const type = document.getElementById('type');
+                var type_val = type[type.selectedIndex].value;
+
+                var claim_b = aesjs.utils.utf8.toBytes(claim.value);
+                var aesCtr = new aesjs.ModeOfOperation.ctr(nonce);    //optional param new aesjs.Counter(1)
+                var claim_enc = aesCtr.encrypt(claim_b);
+                var claim_hex = aesjs.utils.hex.fromBytes(claim_enc);
+                console.log("Encrypted Credit Data: " + claim_hex);
+
+                const tx = BigchainDB.Transaction.makeCreateTransaction(
+                    { schema: 'business', type: type_val, claim: claim_hex, nonce: nonce_hex },
+
+                    { oid: '.1.3.6.1.4.1.46744.1' },
+
+                    [BigchainDB.Transaction.makeOutput(
+                            BigchainDB.Transaction.makeEd25519Condition(key_public.value))
+                    ],
+                    key_public.value
+                )
+
+                /*tx.id = sha3.sha3_256
+                    .create()
+                    .update(driver.Transaction.serializeTransactionIntoCanonicalString(tx))
+                    .hex()*/
+
+                const txSigned = BigchainDB.Transaction.signTransaction(tx, key_private.value)
+
+                let conn = new BigchainDB.Connection('https://test3.bigchaindb.com/api/v1/', {
+                    app_id: '2c148e17',
+                    app_key: '514121307804d7492651d3cba7fd02e4'
+                })
+
+                conn.postTransactionCommit(txSigned)
+                    .then(retrievedTx => {
+                        console.log('Transaction', retrievedTx.id, 'accepted')
+                    })
+
+
+                // USE FOR TRIALS
+                // Prototype code for decryption of data
+                var claim_b2 = aesjs.utils.hex.toBytes(claim_hex);
+
+                var aesCtr = new aesjs.ModeOfOperation.ctr(nonce);      //assumes counter is 1
+                var claim_dec = aesCtr.decrypt(claim_b2);
+
+                var claim_txt = aesjs.utils.utf8.fromBytes(claim_dec);
+                console.log("Decrypted Credit Data: " + claim_txt);
+
+            }
+        </script>
+
+    </body>
+</html>
