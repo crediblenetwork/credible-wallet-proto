@@ -35,7 +35,8 @@
             <option value="business.tax.enrol_date">business.tax.enrol_date</option>
         </select>
         <input type="text" id="claim" size="30" value="Founders Bakuteh"/>
-        
+        <p/>
+        Output: <i><span id="encrypted"></span></i>
         <p/>
         <input type="button" id="submit" value="Post" onclick="JavaScript:onSubmit()"/>
 
@@ -57,6 +58,7 @@
                 var nonce = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
                 var nonce_hex = aesjs.utils.hex.fromBytes(nonce);
 
+                const encrypted = document.getElementById('encrypted');
                 const claim = document.getElementById('claim');
                 const type = document.getElementById('type');
                 var type_val = type[type.selectedIndex].value;
@@ -95,6 +97,7 @@
                         console.log('Transaction', retrievedTx.id, 'accepted')
                     })
 
+                encrypted.innerHTML = "<br/>&nbsp;&nbsp;data: " + claim_hex + " <br/>&nbsp;&nbsp;nonce: " + nonce_hex;
 
                 // USE FOR TRIALS
                 // Prototype code for decryption of data
