@@ -1,6 +1,6 @@
 ﻿<!DOCTYPE HTML>
 <!--
-    Credible Explorer v0.1
+    Credible Explorer v0.1.1
     Created by Thorsten Neumann and Bao Trung
     Experimental code. Use with care. Prototype
 -->
@@ -35,16 +35,35 @@
             <option value="business.tax.enrol_date">business.tax.enrol_date</option>
         </select>
         <input type="text" id="claim" size="30" value="Founders Bakuteh"/>
-        <p/>
-        Output: <i><span id="encrypted"></span></i>
+        <p>
+        Output: <i><br/>
+            &nbsp;&nbsp;Claim: <span id="claim_hex"></span><br />
+            &nbsp;&nbsp;Nonce: <span id="nonce_hex"></span>    
+            </i>
+        </p>
+
+        Sign ID: <i><span id="sign_id"></span></i><br/>
+        Txn ID: <i><span id="txn_id"></span></i>
         <p/>
         <input type="button" id="submit" value="Post" onclick="JavaScript:onSubmit()"/>
+        <input type="button" id="submit" value="Transfer" onclick="JavaScript:onTransfer()" />
 
         <script>
-            const key_private = document.getElementById('key_private');
-            const key_public = document.getElementById('key_public');
+            //const credible = 'http://credible-2.testnet.smartpesa.com:9984/api/v1/';
+            const credible = 'https://test3.bigchaindb.com/api/v1/';
+
+            let conn = new BigchainDB.Connection(credible, {
+                app_id: '2c148e17',
+                app_key: '514121307804d7492651d3cba7fd02e4'
+            })
+
+            var key_private = document.getElementById('key_private');
+            var key_public = document.getElementById('key_public');
+            var previous_private = key_private.value;
 
             function onGenerate() {
+                previous_private = key_private.value;
+
                 const merchant = new BigchainDB.Ed25519Keypair();
                 key_private.value = merchant.privateKey;
                 key_public.value = merchant.publicKey;
@@ -52,13 +71,15 @@
         </script>
 
         <script>
+            var txn_id;
+            var txSigned;
+
             function onSubmit() {
 
                 // Example 128-bit. Need revision 192 or 256. Generated or derived
                 var nonce = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
                 var nonce_hex = aesjs.utils.hex.fromBytes(nonce);
 
-                const encrypted = document.getElementById('encrypted');
                 const claim = document.getElementById('claim');
                 const type = document.getElementById('type');
                 var type_val = type[type.selectedIndex].value;
@@ -69,11 +90,12 @@
                 var claim_hex = aesjs.utils.hex.fromBytes(claim_enc);
                 console.log("Encrypted Credit Data: " + claim_hex);
 
-                const tx = BigchainDB.Transaction.makeCreateTransaction(
-                    { schema: 'business', type: type_val, claim: claim_hex, nonce: nonce_hex },
+                document.getElementById('claim_hex').innerHTML = claim_hex;
+                document.getElementById('nonce_hex').innerHTML = nonce_hex;
 
-                    { oid: '.1.3.6.1.4.1.46744.1' },
-
+                var tx = BigchainDB.Transaction.makeCreateTransaction(
+                    { schema: 'business', type: type_val, claim: claim_hex, nonce: nonce_hex },     //data
+                    { oid: '.1.3.6.1.4.1.46744.1' },    //meta-data
                     [BigchainDB.Transaction.makeOutput(
                             BigchainDB.Transaction.makeEd25519Condition(key_public.value))
                     ],
@@ -85,19 +107,17 @@
                     .update(driver.Transaction.serializeTransactionIntoCanonicalString(tx))
                     .hex()*/
 
-                const txSigned = BigchainDB.Transaction.signTransaction(tx, key_private.value)
+                txSigned = BigchainDB.Transaction.signTransaction(tx, key_private.value);
 
-                let conn = new BigchainDB.Connection('https://credible-1.testnet.smartpesa.com/api/v1/', {
-                    app_id: '2c148e17',
-                    app_key: '514121307804d7492651d3cba7fd02e4'
-                })
+                //record txn id on signing
+                document.getElementById('sign_id').innerHTML = txSigned.id;
 
+                //alternatives are async postTransaction() and postTransactionSync()
                 conn.postTransactionCommit(txSigned)
                     .then(retrievedTx => {
                         console.log('Transaction', retrievedTx.id, 'accepted')
+                        document.getElementById('txn_id').innerHTML = retrievedTx.id;
                     })
-
-                encrypted.innerHTML = "<br/>&nbsp;&nbsp;data: " + claim_hex + " <br/>&nbsp;&nbsp;nonce: " + nonce_hex;
 
                 // USE FOR TRIALS
                 // Prototype code for decryption of data
@@ -108,6 +128,34 @@
 
                 var claim_txt = aesjs.utils.utf8.fromBytes(claim_dec);
                 console.log("Decrypted Credit Data: " + claim_txt);
+
+            }
+
+            function onTransfer() {
+
+                document.getElementById('sign_id').innerHTML = '';
+                document.getElementById('txn_id').innerHTML = '';
+
+                const tx = BigchainDB.Transaction.makeTransferTransaction(
+                        [{ tx: txSigned, output_index: 0 }],
+                        [BigchainDB.Transaction.makeOutput(BigchainDB.Transaction.makeEd25519Condition(key_public.value))],
+                        // metadata
+                        { update: 'attestation' }
+                )
+
+                txSigned = BigchainDB.Transaction.signTransaction(tx, previous_private)
+
+                document.getElementById('sign_id').innerHTML = txSigned.id;
+                console.log('Performing transfer: ', txSigned.id)
+
+                conn.postTransactionCommit(txSigned)
+                    .then(retrievedTx => {
+                        console.log('Transaction', retrievedTx.id, 'accepted')
+                        document.getElementById('txn_id').innerHTML = retrievedTx.id;
+
+                        //assign current private key to be the new previous
+                        previous_private = key_private.value;
+                    })
 
             }
         </script>
