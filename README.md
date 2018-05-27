@@ -1,6 +1,6 @@
 # Credible Wallet Prototype
 
-[![license](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](LICENSE)
 
 Experimental Credible Wallet is a prototype for credit data on blockchain interactions. 
 
