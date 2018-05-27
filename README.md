@@ -1,6 +1,6 @@
 # Credible Wallet Prototype
 
-[![license](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](https://github.com/smartpesa/credible-wallet-proto/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/cosmos/cosmos-sdk.svg)](blob/master/LICENSE)
 
 Experimental Credible Wallet is a prototype for credit data on blockchain interactions. 
 
@@ -11,5 +11,5 @@ Currently using public testnet. Will be ported to SP permissionless testnet once
 #### Test Nodes
 
 Updated to use Credible developer nodes:
-- http://credible-1.testnet.smartpesa.com:9984
-- http://credible-2.testnet.smartpesa.com:9984
+- http://credible-1.testnet.smartpesa.com
+- http://credible-2.testnet.smartpesa.com
