@@ -8,7 +8,9 @@
     <head>
         <title>SmartPesa Credible Explorer</title>
         <script type="text/javascript" src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/bigchaindb-driver@4.0.0/dist/browser/bigchaindb-driver.window.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript" src="credible.js"></script>
     </head>
     <body>
         <h1 style="margin-bottom:-8px;">SmartPesa Credible</h1>
@@ -45,71 +47,14 @@
         Sign ID: <i><span id="sign_id"></span></i><br/>
         Txn ID: <i><span id="txn_id"></span></i>
         <p/>
-        <input type="button" id="submit" value="Post" onclick="JavaScript:onSubmit()"/>
-        <input type="button" id="submit" value="Transfer" onclick="JavaScript:onTransfer()" />
-
-        <script>
-            function requestApi(url, method, data, callback) {
-                $.ajax({
-                    url: "http://13.251.25.40/rpc-api/" + url,
-                    type: method,
-                    dataType: 'json',
-                    headers: {
-                        "Authorization": "Basic " + btoa("SmartPesa:Password"),
-                        "Content-Type": "application/json; charset=UTF-8"
-                    },
-                    data: JSON.stringify(data),
-                    success: function (data) {
-                        callback(data);
-                    },
-                    error: function(xhr, textStatus, error) {
-                        alert(xhr.responseJSON.message);
-                    }
-                });
-            }
-
-            var previous_private = $("#key_private").val();
-
-            function onGenerate() {
-                previous_private = $("#key_private").val();
-                requestApi("generatekeypair", "GET", {}, function(data) {
-                    $("#key_private").val(data.private_key);
-                    $("#key_public").val(data.public_key);
-                });
-            }
-        </script>
-
-        <script>
-            function onSubmit() {
-                let postData = {
-                    claim: $("#claim").val(),
-                    type: $("#type").val(),
-                    private_key: $("#key_private").val(),
-                    public_key: $("#key_public").val(),
-                }
-                requestApi("add", "POST", postData, function(data) {
-                    $("#claim_hex").text(data.claim_hex);
-                    $("#nonce_hex").text(data.nonce_hex);
-                    $("#sign_id").text(data.sign_id);
-                    $("#txn_id").text(data.txn_id);
-                });
-            }
-
-            function onTransfer() {
-                $("#txn_id").text("");                
-                let postData = {
-                    sign_id: $("#sign_id").text(),
-                    from_private_key: previous_private,
-                    to_public_key: $("#key_public").val(),
-                }
-                requestApi("transfer", "POST", postData, function(data) {
-                    $("#sign_id").text(data.sign_id);
-                    $("#txn_id").text(data.txn_id);
-                    //assign current private key to be the new previous
-                    previous_private = $("#key_private").val();
-                });
-            }
-        </script>
-
+        <input type="button" id="btn_submit" value="Post" />
+        <input type="button" id="btn_transfer" value="Transfer" />
+        <input type="button" id="btn_search" value="Search" />
+        <div style="width:100%;">
+            <h2 style="float:left;width:40%;">Transaction id list</h2>
+            <h2 style="float:right;width:60%;">Transaction detail</h2>
+            <div id="div_transaction_ids" style="clear: both;float:left;width:40%;"></div>
+            <div id="div_transaction_detail" style="float:right;width:60%;"></div>
+        </div>
     </body>
 </html>
