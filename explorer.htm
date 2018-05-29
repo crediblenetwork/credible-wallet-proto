@@ -8,9 +8,9 @@
     <head>
         <title>SmartPesa Credible Explorer</title>
         <script type="text/javascript" src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
-        <script type="text/javascript" src="https://unpkg.com/bigchaindb-driver@4.0.0/dist/browser/bigchaindb-driver.window.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.0/nacl.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="credible.js"></script>
+        <script type="text/javascript" src="credible-driver.js"></script>
     </head>
     <body>
         <h1 style="margin-bottom:-8px;">SmartPesa Credible</h1>
@@ -21,7 +21,7 @@
         Public Key:&nbsp; <input type="text" id="key_public" size="50" value="9U95xGb6E2hendFE2F4aGvX5vrepYrht8LFjkVyaazdM"/>
     
         <p />
-        <input type="button" id="submit" value="Generate New" onclick="JavaScript:onGenerate()" />
+        <input type="button" id="btn_generate" value="Generate New" />
 
         <h3>Data Post</h3>
 

@@ -1,5 +1,6 @@
-$(function() {
+$(function () {
     var previous_private = $("#key_private").val();
+    $("#btn_generate").click(onGenerate);
     $("#btn_submit").click(onSubmit);
     $("#btn_transfer").click(onTransfer);
     $("#btn_search").click(onSearch);
@@ -7,14 +8,14 @@ $(function() {
 
 function onGenerate() {
     previous_private = $("#key_private").val();
-    const merchant = new BigchainDB.Ed25519Keypair();
+    const merchant = new Keys().Ed25519Keypair();
     $("#key_private").val(merchant.privateKey);
     $("#key_public").val(merchant.publicKey);
 }
 
 function requestApi(url, method, data, callback) {
     $.ajax({
-        url: "http://13.251.25.40/rpc-api/" + url,
+        url: "http://13.251.25.40/credible-rpc-api/" + url,
         type: method,
         dataType: 'json',
         headers: {
@@ -25,7 +26,7 @@ function requestApi(url, method, data, callback) {
         success: function (data) {
             callback(data);
         },
-        error: function(xhr, textStatus, error) {
+        error: function (xhr, textStatus, error) {
             alert(xhr.responseJSON.message);
         }
     });
@@ -38,7 +39,7 @@ function onSubmit() {
         private_key: $("#key_private").val(),
         public_key: $("#key_public").val(),
     }
-    requestApi("add", "POST", postData, function(data) {
+    requestApi("add", "POST", postData, function (data) {
         $("#claim_hex").text(data.claim_hex);
         $("#nonce_hex").text(data.nonce_hex);
         $("#sign_id").text(data.sign_id);
@@ -47,13 +48,13 @@ function onSubmit() {
 }
 
 function onTransfer() {
-    $("#txn_id").text("");                
+    $("#txn_id").text("");
     let postData = {
         sign_id: $("#sign_id").text(),
         from_private_key: previous_private,
         to_public_key: $("#key_public").val(),
     }
-    requestApi("transfer", "POST", postData, function(data) {
+    requestApi("transfer", "POST", postData, function (data) {
         $("#sign_id").text(data.sign_id);
         $("#txn_id").text(data.txn_id);
         //assign current private key to be the new previous
@@ -62,17 +63,56 @@ function onTransfer() {
 }
 
 function onSearch() {
-    requestApi("search?public_key=" + $("#key_public").val(), "GET", {}, function(data) {
+    requestApi("search?public_key=" + $("#key_public").val(), "GET", {}, function (data) {
         $("#div_transaction_ids").html('');
-        for (var i = 0;i < data.length; i++) {
+        for (var i = 0; i < data.length; i++) {
             $("#div_transaction_ids").append("<p><a href='javascript:onDetail(\"" + data[i].transaction_id + "\")'>" + data[i].transaction_id + "</a></p>");
         }
     });
 }
 
 function onDetail(transaction_id) {
-    $("#txn_id").text("");  
-    requestApi("gettransaction?transaction_id=" + transaction_id, "GET", {}, function(data) {
+    $("#txn_id").text("");
+    requestApi("gettransaction?transaction_id=" + transaction_id, "GET", {}, function (data) {
         $("#div_transaction_detail").html("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
     });
+}
+
+var Keys = function () { }
+
+Keys.prototype.Ed25519Keypair = function (seed) {
+    const keyPair = seed ? nacl.sign.keyPair.fromSeed(seed) : nacl.sign.keyPair()
+    return {
+        publicKey: this.base58_encode(keyPair.publicKey),
+        privateKey: this.base58_encode(keyPair.secretKey.slice(0, 32))
+    }
+}
+
+Keys.prototype.base58_encode = function (source) {
+    var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+    var BASE = ALPHABET.length;
+    var LEADER = ALPHABET.charAt(0)
+
+    if (source.length === 0) return '';
+
+    var digits = [0];
+    for (var i = 0; i < source.length; ++i) {
+        for (var j = 0, carry = source[i]; j < digits.length; ++j) {
+            carry += digits[j] << 8;
+            digits[j] = carry % BASE;
+            carry = (carry / BASE) | 0;
+        }
+
+        while (carry > 0) {
+            digits.push(carry % BASE);
+            carry = (carry / BASE) | 0;
+        }
+    }
+
+    var string = '';
+
+    for (var k = 0; source[k] === 0 && k < source.length - 1; ++k) string += LEADER;
+    for (var q = digits.length - 1; q >= 0; --q) string += ALPHABET[digits[q]];
+
+    return string;
 }
