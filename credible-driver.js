@@ -5,21 +5,17 @@ Version	 :	0.1
 Updated	 :	05.06.2018
 */
 
-var url;
+var _endPoint = "";
 
-function setEndpoint(url) {
-    parent.url = url;
+let credible_driver = function () { }
+
+credible_driver.prototype.setEndpoint = function (url) {
+    _endPoint = url.lastIndexOf("/") == url.length - 1 ? url : url + "/";
 }
 
-function onGenerate() {
-    return new Keys().Ed25519Keypair();
-}
-
-function requestApi(url, method, data, callback) {
-    /* todo: check if rpc url ends with slash (/) */
-
+credible_driver.prototype.requestApi = function (url, method, data, callback) {
     $.ajax({
-        url: url,
+        url: _endPoint + url,
         type: method,
         dataType: 'json',
         headers: {
@@ -31,61 +27,32 @@ function requestApi(url, method, data, callback) {
             callback(data);
         },
         error: function (xhr, textStatus, error) {
-            alert(xhr.responseJSON.message);
+            alert(xhr.responseJSON !== undefined ? xhr.responseJSON.message : textStatus);
         }
     });
 }
 
-function onSubmit() {
-    let postData = {
-        claim: $("#claim").val(),
-        type: $("#type").val(),
-        private_key: $("#key_private").val(),
-        public_key: $("#key_public").val(),
-    }
-    requestApi(url + "add", "POST", postData, function (data) {
-        $("#claim_hex").text(data.claim_hex);
-        $("#nonce_hex").text(data.nonce_hex);
-        $("#sign_id").text(data.sign_id);
-        $("#txn_id").text(data.txn_id);
-    });
+credible_driver.prototype.Submit = function (postData, callback) {
+    this.requestApi("add", "POST", postData, callback);
 }
 
-function onTransfer() {
-    $("#txn_id").text("");
-    let postData = {
-        sign_id: $("#sign_id").text(),
-        from_private_key: previous_private,
-        to_public_key: $("#key_public").val(),
-    }
-    requestApi(url + "transfer", "POST", postData, function (data) {
-        $("#sign_id").text(data.sign_id);
-        $("#txn_id").text(data.txn_id);
-
-        //assign current private key to be the new previous
-        previous_private = $("#key_private").val();
-    });
+credible_driver.prototype.Transfer = function (postData, callback) {
+    this.requestApi("transfer", "POST", postData, callback);
 }
 
-function onSearch() {
-    requestApi(url + "search?public_key=" + $("#key_public").val(), "GET", {}, function (data) {
-        $("#div_transaction_ids").html('');
-        for (var i = 0; i < data.length; i++) {
-            $("#div_transaction_ids").append("<p><a href='javascript:onDetail(\"" + data[i].transaction_id + "\")'>" + data[i].transaction_id + "</a></p>");
-        }
-    });
+credible_driver.prototype.Search = function (public_key, callback) {
+    this.requestApi("search?public_key=" + public_key, "GET", {}, callback);
 }
 
-function onDetail(transaction_id) {
-    $("#txn_id").text("");
-    requestApi(url + "gettransaction?transaction_id=" + transaction_id, "GET", {}, function (data) {
-        $("#div_transaction_detail").html("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
-    });
+credible_driver.prototype.Detail = function (transaction_id, callback) {
+    this.requestApi("gettransaction?transaction_id=" + transaction_id, "GET", {}, callback);
 }
 
-var Keys = function () { }
+credible_driver.prototype.GenerateKey = function () {
+    return this.Ed25519Keypair();
+}
 
-Keys.prototype.Ed25519Keypair = function (seed) {
+credible_driver.prototype.Ed25519Keypair = function (seed) {
     const keyPair = seed ? nacl.sign.keyPair.fromSeed(seed) : nacl.sign.keyPair()
     return {
         publicKey: this.base58_encode(keyPair.publicKey),
@@ -93,7 +60,7 @@ Keys.prototype.Ed25519Keypair = function (seed) {
     }
 }
 
-Keys.prototype.base58_encode = function (source) {
+credible_driver.prototype.base58_encode = function (source) {
     var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
     var BASE = ALPHABET.length;
     var LEADER = ALPHABET.charAt(0)
@@ -121,3 +88,5 @@ Keys.prototype.base58_encode = function (source) {
 
     return string;
 }
+
+var Credible = new credible_driver();

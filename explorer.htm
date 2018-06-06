@@ -76,14 +76,12 @@
 
         <script>
             /* init hooks */
-            const credible = "http://13.251.25.40/credible-rpc-api/";
-
             /* init hooks */
             $(function () {
-                setEndpoint(url);
+                Credible.setEndpoint("http://credible-1.testnet.smartpesa.com/credible-rpc-api/");
 
                 var previous_private = $("#key_private").val();
-                $("#btn_generate").click(generateNewKey());
+                $("#btn_generate").click(generateNewKey);
                 $("#btn_submit").click(onSubmit);
                 $("#btn_transfer").click(onTransfer);
                 $("#btn_search").click(onSearch);
@@ -93,9 +91,55 @@
                 previous_private = $("#key_private").val();
 
                 /* call to driver */
-                const merchant = onGenerate();
+                const merchant = Credible.GenerateKey();
                 $("#key_private").val(merchant.privateKey);
                 $("#key_public").val(merchant.publicKey);
+            }
+
+            function onSubmit() {
+                let postData = {
+                    claim: $("#claim").val(),
+                    type: $("#type").val(),
+                    private_key: $("#key_private").val(),
+                    public_key: $("#key_public").val(),
+                }
+                Credible.Submit(postData, function (data) {
+                    $("#claim_hex").text(data.claim_hex);
+                    $("#nonce_hex").text(data.nonce_hex);
+                    $("#sign_id").text(data.sign_id);
+                    $("#txn_id").text(data.txn_id);
+                });
+            }
+            
+            function onTransfer() {
+                $("#txn_id").text("");
+                let postData = {
+                    sign_id: $("#sign_id").text(),
+                    from_private_key: previous_private,
+                    to_public_key: $("#key_public").val(),
+                }
+                Credible.Transfer(postData, function (data) {
+                    $("#sign_id").text(data.sign_id);
+                    $("#txn_id").text(data.txn_id);
+
+                    //assign current private key to be the new previous
+                    previous_private = $("#key_private").val();
+                });
+            }
+
+            function onSearch() {
+                Credible.Search($("#key_public").val(), function (data) {
+                    $("#div_transaction_ids").html('');
+                    for (var i = 0; i < data.length; i++) {
+                        $("#div_transaction_ids").append("<p><a href='javascript:onDetail(\"" + data[i].transaction_id + "\")'>" + data[i].transaction_id + "</a></p>");
+                    }
+                });
+            }
+
+            function onDetail(transaction_id) {
+                Credible.Detail(transaction_id, function (data) {
+                    $("#div_transaction_detail").html("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
+                });
             }
         </script>
     </body>
