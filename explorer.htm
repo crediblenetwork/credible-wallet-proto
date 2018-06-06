@@ -11,6 +11,7 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.0/nacl.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script type="text/javascript" src="credible-driver.js"></script>
+        <script type="text/javascript" src="secrets.min.js"></script>
     </head>
     <body>
         <h1 style="margin-bottom:-8px;">SmartPesa Credible</h1>
@@ -49,12 +50,53 @@
         <p/>
         <input type="button" id="btn_submit" value="Post" />
         <input type="button" id="btn_transfer" value="Transfer" />
-        <input type="button" id="btn_search" value="Search" />
+        <input type="button" id="btn_search" value="Search" /><p/>
+        <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
         <div style="width:100%;">
             <h2 style="float:left;width:40%;">Transaction id list</h2>
             <h2 style="float:right;width:60%;">Transaction detail</h2>
             <div id="div_transaction_ids" style="clear: both;float:left;width:40%;"></div>
             <div id="div_transaction_detail" style="float:right;width:60%;"></div>
         </div>
+
+        <script>
+            function shamir() {
+                var pw = 'oneTIMEnonce';
+                var pwHex = secrets.str2hex(pw); // => 240-bit password
+
+                // split into 3 shares, with a threshold of 2
+                var shares = secrets.share(pwHex, 3, 2, 256);   // 3 x 256-bit shares
+
+                var comb = secrets.combine([shares[1], shares[2]]);
+                comb = secrets.hex2str(comb);
+
+                console.log(comb === pw);   // should return true
+            }
+        </script>
+
+        <script>
+            /* init hooks */
+            const credible = "http://13.251.25.40/credible-rpc-api/";
+
+            /* init hooks */
+            $(function () {
+                setEndpoint(url);
+
+                var previous_private = $("#key_private").val();
+                $("#btn_generate").click(generateNewKey());
+                $("#btn_submit").click(onSubmit);
+                $("#btn_transfer").click(onTransfer);
+                $("#btn_search").click(onSearch);
+            });
+
+            function generateNewKey() {
+                previous_private = $("#key_private").val();
+
+                /* call to driver */
+                const merchant = onGenerate();
+                $("#key_private").val(merchant.privateKey);
+                $("#key_public").val(merchant.publicKey);
+            }
+        </script>
     </body>
 </html>

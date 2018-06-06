@@ -1,21 +1,25 @@
-$(function () {
-    var previous_private = $("#key_private").val();
-    $("#btn_generate").click(onGenerate);
-    $("#btn_submit").click(onSubmit);
-    $("#btn_transfer").click(onTransfer);
-    $("#btn_search").click(onSearch);
-});
+/*!
+Author	 :	SmartPesa
+Venture  :  Credible
+Version	 :	0.1
+Updated	 :	05.06.2018
+*/
+
+var url;
+
+function setEndpoint(url) {
+    parent.url = url;
+}
 
 function onGenerate() {
-    previous_private = $("#key_private").val();
-    const merchant = new Keys().Ed25519Keypair();
-    $("#key_private").val(merchant.privateKey);
-    $("#key_public").val(merchant.publicKey);
+    return new Keys().Ed25519Keypair();
 }
 
 function requestApi(url, method, data, callback) {
+    /* todo: check if rpc url ends with slash (/) */
+
     $.ajax({
-        url: "http://13.251.25.40/credible-rpc-api/" + url,
+        url: url,
         type: method,
         dataType: 'json',
         headers: {
@@ -39,7 +43,7 @@ function onSubmit() {
         private_key: $("#key_private").val(),
         public_key: $("#key_public").val(),
     }
-    requestApi("add", "POST", postData, function (data) {
+    requestApi(url + "add", "POST", postData, function (data) {
         $("#claim_hex").text(data.claim_hex);
         $("#nonce_hex").text(data.nonce_hex);
         $("#sign_id").text(data.sign_id);
@@ -54,16 +58,17 @@ function onTransfer() {
         from_private_key: previous_private,
         to_public_key: $("#key_public").val(),
     }
-    requestApi("transfer", "POST", postData, function (data) {
+    requestApi(url + "transfer", "POST", postData, function (data) {
         $("#sign_id").text(data.sign_id);
         $("#txn_id").text(data.txn_id);
+
         //assign current private key to be the new previous
         previous_private = $("#key_private").val();
     });
 }
 
 function onSearch() {
-    requestApi("search?public_key=" + $("#key_public").val(), "GET", {}, function (data) {
+    requestApi(url + "search?public_key=" + $("#key_public").val(), "GET", {}, function (data) {
         $("#div_transaction_ids").html('');
         for (var i = 0; i < data.length; i++) {
             $("#div_transaction_ids").append("<p><a href='javascript:onDetail(\"" + data[i].transaction_id + "\")'>" + data[i].transaction_id + "</a></p>");
@@ -73,7 +78,7 @@ function onSearch() {
 
 function onDetail(transaction_id) {
     $("#txn_id").text("");
-    requestApi("gettransaction?transaction_id=" + transaction_id, "GET", {}, function (data) {
+    requestApi(url + "gettransaction?transaction_id=" + transaction_id, "GET", {}, function (data) {
         $("#div_transaction_detail").html("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
     });
 }
