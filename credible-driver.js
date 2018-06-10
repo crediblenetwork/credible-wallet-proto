@@ -11,6 +11,7 @@ let credible_driver = function () { }
 
 credible_driver.prototype.setEndpoint = function (url) {
     _endPoint = url.lastIndexOf("/") == url.length - 1 ? url : url + "/";
+    _endPoint += 'credible-rpc-api/';
 }
 
 credible_driver.prototype.requestApi = function (url, method, data, callback) {

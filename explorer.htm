@@ -48,9 +48,17 @@
         Sign ID: <i><span id="sign_id"></span></i><br/>
         Txn ID: <i><span id="txn_id"></span></i>
         <p/>
+        Node:
+        <select name="node" id="node">
+            <option value="credible-1.testnet.smartpesa.com">credible-1.testnet.smartpesa.com</option>
+            <option value="credible-2.testnet.smartpesa.com">credible-2.testnet.smartpesa.com</option>
+            <option value="credible-3.testnet.smartpesa.com">credible-3.testnet.smartpesa.com</option>
+        </select>
         <input type="button" id="btn_submit" value="Post" />
         <input type="button" id="btn_transfer" value="Transfer" />
-        <input type="button" id="btn_search" value="Search" /><p/>
+        <input type="button" id="btn_search" value="Search" />
+
+        <p/>
         <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
         <div style="width:100%;">
             <h2 style="float:left;width:40%;">Transaction id list</h2>
@@ -78,14 +86,24 @@
             /* init hooks */
             /* init hooks */
             $(function () {
-                Credible.setEndpoint("http://credible-1.testnet.smartpesa.com/credible-rpc-api/");
-
                 var previous_private = $("#key_private").val();
+
+                setNode();
+
                 $("#btn_generate").click(generateNewKey);
                 $("#btn_submit").click(onSubmit);
                 $("#btn_transfer").click(onTransfer);
                 $("#btn_search").click(onSearch);
             });
+
+            $("#node").change(function () {
+                setNode();
+            });
+
+            function setNode() {
+                var _node = $("#node").val();
+                Credible.setEndpoint("http://" + _node);
+            }
 
             function generateNewKey() {
                 previous_private = $("#key_private").val();
