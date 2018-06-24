@@ -19,7 +19,10 @@
         Tokens: <input type="text" id="nTokens" size="5" value="10000"/>
     
         <p />
-        <input type="button" id="submit" value="Launch Token" onclick="JavaScript:onLaunchToken()" />
+        <!--<input type="button" id="submit" value="Launch Token" onclick="JavaScript:onLaunchToken()" />
+            <a id="tokenTransaction" target="_blank"><em>processing</em></a>-->
+
+        <input type="button" id="submit" value="Token Balance" onclick="JavaScript:onTokenBalance()" />
 
         <script>
             function onGenerate() {
@@ -82,10 +85,49 @@
                         // document.body.innerHTML += txSigned.id
                     })
             }
+
+
+
+            function onTokenBalance() {
+                var privateKey = document.getElementById('key_private');
+                var publicKey = document.getElementById('key_public');
+
+                var receiverPublicKey = document.getElementById('receiverPublicKey');
+                var nTransferTokens = document.getElementById('nTransferTokens')
+
+                conn.listOutputs(publicKey.value, 'false')
+                    .then((txs) => {
+
+                        console.log(txs)
+
+                        var amount = 0;
+                        for (i = 0; i <= txs.length; i++) { 
+
+                            conn.getTransaction(txs[i].transaction_id)
+                                .then((txOutputs) => {
+
+                                    for (o = 0; o <= txOutputs.outputs.length; o++) { 
+                                        if (txOutputs.outputs[o].public_keys[0] == publicKey.value) {
+                                            amount += parseInt(txOutputs.outputs[o].amount);
+
+                                            //todo: poor code updating inside loop. should be after all addition
+                                            const elem = document.getElementById('tokenBalance')
+                                            elem.innerText = amount;
+
+                                        }
+                                    }
+                                    
+                                    alert(amount);
+                                });
+                        }
+                    })
+                    
+                
+            }
+
         </script>
 
-        <p>Your tokens: <a id="tokenTransaction" target="_blank"><em>processing</em></a></p>
-
+        <p>Your tokens balance: <span id="tokenBalance" target="_blank"><em>0</em></span></p>
 
 
 
@@ -120,34 +162,46 @@
                 var receiverPublicKey = document.getElementById('receiverPublicKey');
                 var nTransferTokens = document.getElementById('nTransferTokens')
 
-                // Search outputs of the transactions belonging the token creator
-                // False argument to retrieve unspent outputs
+                var _output_index = 0;
+
+                // false argument to retrieve unspent outputs
                 conn.listOutputs(publicKey.value, 'false')
                     .then((txs) => {
 
                         console.log(txs)
-                        // Just one transaction available with outputs not being spent by
-                        // tokenCreator. Therefore, txs[0]
+
+                        _output_index  = txs[0].output_index;
+
                         return conn.getTransaction(txs[0].transaction_id)
                     })
                     .then((txOutputs) => {
                         console.log(txOutputs)
 
                         console.log('transfer amount: ' + nTransferTokens.value)
-                        console.log('make transfer txn, amount left: ' + (txOutputs.outputs[0].amount - nTransferTokens.value).toString())
+
+                        var _amount = 0;
+                        for (o = 0; o <= txOutputs.outputs.length; o++) { 
+                            if (txOutputs.outputs[o].public_keys[0] == publicKey.value) {
+                                _amount = parseInt(txOutputs.outputs[o].amount);
+                                console.log(_amount);
+                            }
+                        }
+
+                        console.log('make transfer txn, amount left: ' + (_amount - nTransferTokens.value).toString())
+
                         // Create transfer transaction
                         const createTranfer = BigchainDB.Transaction
                             .makeTransferTransaction(
                                 [{
                                     tx: txOutputs,
-                                    output_index: 1
+                                    output_index: _output_index 
                                 }],
                                 // Transaction output: Two outputs, because the whole input
                                 // must be spent
                                 [BigchainDB.Transaction.makeOutput(
                                         BigchainDB.Transaction
                                         .makeEd25519Condition(publicKey.value),
-                                        (txOutputs.outputs[1].amount - nTransferTokens.value).toString()),
+                                        (_amount - nTransferTokens.value).toString()),
 
                                     BigchainDB.Transaction.makeOutput(
                                         BigchainDB.Transaction
@@ -156,7 +210,7 @@
                                 ],
                                 // Metadata (optional)
                                 {
-                                    tokens_left: txOutputs.outputs[1].amount - nTransferTokens.value
+                                    tokens_left: _amount - nTransferTokens.value
                                 }
                             )
 
