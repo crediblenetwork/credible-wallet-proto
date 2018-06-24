@@ -1,0 +1,192 @@
+﻿<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>SmartPesa Token Distribution</title>
+        <script type="text/javascript" src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/bigchaindb-driver@4.0.0/dist/browser/bigchaindb-driver.window.min.js"></script>
+    </head>
+
+
+    <body>
+        <h1 style="margin-bottom:-8px;">SmartPesa Credible</h1>
+        <a href="www.smartpesa.io"><small>www.smartpesa.io</small></a>
+
+        <h3>Token Source</h3>
+        Private Key: <input type="text" id="key_private" size="55" value="8p8sk3ZQ2XKwp7PTSxDSC99j33pdo48Z8g6AJE5fF5An"/>
+        <input type="button" id="genKey" value="Generate New Key" onclick="JavaScript:onGenerate()" />
+        <br/>
+        Public Key:&nbsp; <input type="text" id="key_public" size="50" value="9U95xGb6E2hendFE2F4aGvX5vrepYrht8LFjkVyaazdM"/>
+        Tokens: <input type="text" id="nTokens" size="5" value="10000"/>
+    
+        <p />
+        <input type="button" id="submit" value="Launch Token" onclick="JavaScript:onLaunchToken()" />
+
+        <script>
+            function onGenerate() {
+                const merchant = new BigchainDB.Ed25519Keypair();
+                key_private.value = merchant.privateKey;
+                key_public.value = merchant.publicKey;
+            }
+        </script>
+
+        <script>
+            
+            const credible = 'http://credible-1.testnet.smartpesa.com:9984/api/v1/';
+
+            let conn = new BigchainDB.Connection(credible, {
+                app_id: '2c148e17',
+                app_key: '514121307804d7492651d3cba7fd02e4'
+            })
+
+            function onLaunchToken() {
+
+                var privateKey = document.getElementById('key_private');
+                var publicKey = document.getElementById('key_public');
+
+                var txSigned;
+
+                var nTokens = document.getElementById('nTokens')
+
+                // Construct a transaction payload
+                const tx = BigchainDB.Transaction.makeCreateTransaction({
+                        token: 'PESA',
+                        number_tokens: nTokens.value
+                    },
+                    // Metadata field, contains information about the transaction itself
+                    // (can be `null` if not needed)
+                    {
+                        datetime: new Date().toString()
+                    },
+                    // Output: Divisible asset, include nTokens as parameter
+                    [BigchainDB.Transaction.makeOutput(BigchainDB.Transaction.makeEd25519Condition(publicKey.value), nTokens.value.toString())],
+                    publicKey.value
+                )
+
+                // Sign the transaction with the private key of the token creator
+                const txSigned = BigchainDB.Transaction
+                  .signTransaction(tx, privateKey.value)
+
+                // Send the transaction off to BigchainDB
+                conn.postTransactionCommit(txSigned)
+                    .then(res => {
+
+
+                        const elem = document.getElementById('tokenTransaction')
+                        elem.href = credible + 'transactions/' + txSigned.id
+                        elem.innerText = txSigned.id
+
+                        console.log('Transaction', txSigned.id, 'accepted')
+
+                        // document.body.innerHTML +='<h3>Tokens created</h3>';
+                        // txSigned.id corresponds to the asset id of the tokens
+                        // document.body.innerHTML += txSigned.id
+                    })
+            }
+        </script>
+
+        <p>Your tokens: <a id="tokenTransaction" target="_blank"><em>processing</em></a></p>
+
+
+
+
+
+        <!-- these are default keys holding tokens inside Credible -->
+
+
+        <h3>Token Destination</h3>
+        Private Key: <input type="text" id="receiverPrivateKey" size="55" value="1TJB89xjRqeU2nTbjYX85na5eyy5yRUAxf8v7ghojcz"/>
+        <input type="button" id="genReceiverKey" value="Generate New Key" onclick="JavaScript:onGenerateReceiverKey()" />
+        <br/>
+        Public Key:&nbsp; <input type="text" id="receiverPublicKey" size="50" value="AFbjdqj114X8Swf6JwcekNC1n2DGSkNUBctoJCpPRvNQ"/>
+        Tokens: <input type="text" id="nTransferTokens" size="5" value="100"/>
+    
+        <p />
+        <input type="button" id="transfer" value="Transfer Token" onclick="JavaScript:onTransferToken()" />
+
+        <script>
+            function onGenerateReceiverKey() {
+                const receiver = new BigchainDB.Ed25519Keypair();
+                receiverPrivateKey.value = receiver.privateKey;
+                receiverPublicKey.value = receiver.publicKey;
+            }
+        </script>
+
+        <script>
+
+            function onTransferToken() {
+                var privateKey = document.getElementById('key_private');
+                var publicKey = document.getElementById('key_public');
+
+                var receiverPublicKey = document.getElementById('receiverPublicKey');
+                var nTransferTokens = document.getElementById('nTransferTokens')
+
+                // Search outputs of the transactions belonging the token creator
+                // False argument to retrieve unspent outputs
+                conn.listOutputs(publicKey.value, 'false')
+                    .then((txs) => {
+
+                        console.log(txs)
+                        // Just one transaction available with outputs not being spent by
+                        // tokenCreator. Therefore, txs[0]
+                        return conn.getTransaction(txs[0].transaction_id)
+                    })
+                    .then((txOutputs) => {
+                        console.log(txOutputs)
+
+                        console.log('transfer amount: ' + nTransferTokens.value)
+                        console.log('make transfer txn, amount left: ' + (txOutputs.outputs[0].amount - nTransferTokens.value).toString())
+                        // Create transfer transaction
+                        const createTranfer = BigchainDB.Transaction
+                            .makeTransferTransaction(
+                                [{
+                                    tx: txOutputs,
+                                    output_index: 1
+                                }],
+                                // Transaction output: Two outputs, because the whole input
+                                // must be spent
+                                [BigchainDB.Transaction.makeOutput(
+                                        BigchainDB.Transaction
+                                        .makeEd25519Condition(publicKey.value),
+                                        (txOutputs.outputs[1].amount - nTransferTokens.value).toString()),
+
+                                    BigchainDB.Transaction.makeOutput(
+                                        BigchainDB.Transaction
+                                        .makeEd25519Condition(receiverPublicKey.value),
+                                        nTransferTokens.value)
+                                ],
+                                // Metadata (optional)
+                                {
+                                    tokens_left: txOutputs.outputs[1].amount - nTransferTokens.value
+                                }
+                            )
+
+                        console.log('sign transfer txn')
+                        // Sign the transaction with the tokenCreator key
+                        const signedTransfer = BigchainDB.Transaction
+                            .signTransaction(createTranfer, privateKey.value)
+
+                        console.log('post transfer txn')
+
+                        conn.postTransactionCommit(signedTransfer)
+                        .then(res => {
+
+                            console.log(res)
+                            
+                            const elem = document.getElementById('transferTokenTransaction')
+                            elem.href = credible + 'transactions/' + signedTransfer.id
+                            elem.innerText = signedTransfer.id
+
+                            console.log('Transaction', signedTransfer.id, 'accepted')
+                           
+                            // document.body.innerHTML += '<h3>Transfer transaction created</h3>'
+                            // document.body.innerHTML += res.id
+                        })
+                    })
+                    
+                
+            }
+        </script>
+
+         <p>Your tokens: <a id="transferTokenTransaction" target="_blank"><em>processing</em></a></p>
+    </body>
+</html>
