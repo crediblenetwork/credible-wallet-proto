@@ -49,6 +49,10 @@ credible_driver.prototype.Detail = function (transaction_id, callback) {
     this.requestApi("gettransaction?transaction_id=" + transaction_id, "GET", {}, callback);
 }
 
+credible_driver.prototype.TokenBalance = function (public_key, callback) {
+    this.requestApi("gettokenbalance?public_key=" + public_key, "GET", {}, callback);
+}
+
 credible_driver.prototype.GenerateKey = function () {
     return this.Ed25519Keypair();
 }

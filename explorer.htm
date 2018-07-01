@@ -1,164 +1,135 @@
-﻿<!DOCTYPE HTML>
-<!--
-    Credible Explorer v0.1.1
-    Created by Thorsten Neumann and Bao Trung
-    Experimental code. Use with care. Prototype
--->
-<html>
-    <head>
-        <title>SmartPesa Credible Explorer</title>
-        <script type="text/javascript" src="https://cdn.rawgit.com/ricmoo/aes-js/e27b99df/index.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.0/nacl.min.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script type="text/javascript" src="credible-driver.js"></script>
-        <script type="text/javascript" src="secrets.min.js"></script>
-    </head>
-    <body>
-        <h1 style="margin-bottom:-8px;">SmartPesa Credible</h1>
-        <a href="www.smartpesa.io"><small>www.smartpesa.io</small></a>
+﻿<!DOCTYPE html>
+<meta charset="utf-8" />
+<title>Credible Testnet Explorer</title>
 
-        <h3>Wallet Generator</h3>
-        Private Key: <input type="text" id="key_private" size="55" value="8p8sk3ZQ2XKwp7PTSxDSC99j33pdo48Z8g6AJE5fF5An"/><br/>
-        Public Key:&nbsp; <input type="text" id="key_public" size="50" value="9U95xGb6E2hendFE2F4aGvX5vrepYrht8LFjkVyaazdM"/>
-    
-        <p />
-        <input type="button" id="btn_generate" value="Generate New" />
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 
-        <h3>Data Post</h3>
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
-        <select name="schema">
-            <option value="business">business</option>
-            <option value="address">address</option>
-        </select>
-        <select id="type">
-            <option value="business.name">business.name</option>
-            <option value="business.registered_name">business.registered_name</option>
-            <option value="business.trading_name">business.trading_name</option>
-            <option value="business.tax.code">business.tax.code</option>
-            <option value="business.tax.enrol_date">business.tax.enrol_date</option>
-        </select>
-        <input type="text" id="claim" size="30" value="Founders Bakuteh"/>
-        <p>
-        Output: <i><br/>
-            &nbsp;&nbsp;Claim: <span id="claim_hex"></span><br />
-            &nbsp;&nbsp;Nonce: <span id="nonce_hex"></span>    
-            </i>
-        </p>
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
-        Sign ID: <i><span id="sign_id"></span></i><br/>
-        Txn ID: <i><span id="txn_id"></span></i>
-        <p/>
-        Node:
-        <select name="node" id="node">
-            <option value="credible-1.testnet.smartpesa.com">credible-1.testnet.smartpesa.com</option>
-            <option value="credible-2.testnet.smartpesa.com">credible-2.testnet.smartpesa.com</option>
-            <option value="credible-3.testnet.smartpesa.com">credible-3.testnet.smartpesa.com</option>
-        </select>
-        <input type="button" id="btn_submit" value="Post" />
-        <input type="button" id="btn_transfer" value="Transfer" />
-        <input type="button" id="btn_search" value="Search" />
 
-        <p/>
-        <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
-        <div style="width:100%;">
-            <h2 style="float:left;width:40%;">Transaction id list</h2>
-            <h2 style="float:right;width:60%;">Transaction detail</h2>
-            <div id="div_transaction_ids" style="clear: both;float:left;width:40%;"></div>
-            <div id="div_transaction_detail" style="float:right;width:60%;"></div>
+<style>
+        .box {
+                border-style: outset;
+                border-color:dodgerblue;
+                height: 40px;
+                line-height: 35px;
+				padding-left: 5px;
+        }
+</style>
+<!-- Websocket Script -->
+<script language="javascript" type="text/javascript">
+
+var wsUri = "ws://credible-1.testnet.smartpesa.com:9985/api/v1/streams/valid_transactions";
+var output;
+var alertbox;
+
+function init()
+{
+        output = document.getElementById("output");
+        alertbox = document.getElementById("alert-box");
+        setWebSocket();
+}
+
+function setWebSocket()
+{
+        websocket = new WebSocket(wsUri);
+        websocket.onopen = function(evt) { onOpen(evt) };
+        websocket.onclose = function(evt) { onClose(evt) };
+        websocket.onmessage = function(evt) { onMessage(evt) };
+        websocket.onerror = function(evt) { onError(evt) };
+}
+
+function onOpen(evt)
+{
+        console.log("onOpen: ", evt);
+        writeAlertMessage("CONNECTED");
+}
+
+function onClose(evt)
+{
+        console.log("onClose: ");
+        writeAlertMessage("DISCONNECTED");
+}
+
+function onMessage(evt)
+{
+        console.log("onMessage: ", evt);
+        writeToScreen('<a href="#" class="list-group-item"><h4 class="list-group-item-heading">Valid Transaction</h4><p class="list-group-item-text">' + evt.data + '</p></a>');
+}
+
+function onError(evt)
+{
+        console.log("onError: ", evt);
+        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+}
+
+function closeConnection(evt)
+{
+        console.log("closeConnection: ", evt);
+        websocket.close()
+}
+
+function writeToScreen(message)
+{
+        // var pre = document.createElement("p");
+        // pre.style.wordWrap = "break-word";
+        // pre.innerHTML = message;
+        // output.appendChild(pre);
+        $("#list_transaction").prepend('<p style="word-wrap: break-word;" >' + message + '</p>')
+}
+
+function writeAlertMessage(message)
+{
+        var alert = document.createElement("div");
+        alert.className = "alert alert-success";
+        alert.setAttribute("role", "alert");
+        alert.innerHTML = message;
+        alertbox.appendChild(alert);
+}
+
+/* Initialize websocket and attach all events */
+window.addEventListener("load", init, false);
+
+/* Event called on closing browser or refreshing page to close connection */
+window.addEventListener("beforeunload", closeConnection, false);
+
+</script>
+
+<!-- HTML Template -->
+<body>
+<div class="container" style="height: 100%;">
+        <div class="row">
+                <img class="logo logo-dark" alt="logo" src="images/logo.png">
+                <h3>Credible Valid Transactions</h3>
+                <!-- Box for displaying all alerts -->
+                <div id="alert-box"></div>
+                <!-- Div for attachting all outputs -->
+                <div id="output" class="list-group"></div>
         </div>
-
-        <script>
-            function shamir() {
-                var pw = 'oneTIMEnonce';
-                var pwHex = secrets.str2hex(pw); // => 240-bit password
-
-                // split into 3 shares, with a threshold of 2
-                var shares = secrets.share(pwHex, 3, 2, 256);   // 3 x 256-bit shares
-
-                var comb = secrets.combine([shares[1], shares[2]]);
-                comb = secrets.hex2str(comb);
-
-                console.log(comb === pw);   // should return true
-            }
-        </script>
-
-        <script>
-            /* init hooks */
-            /* init hooks */
-            $(function () {
-                var previous_private = $("#key_private").val();
-
-                setNode();
-
-                $("#btn_generate").click(generateNewKey);
-                $("#btn_submit").click(onSubmit);
-                $("#btn_transfer").click(onTransfer);
-                $("#btn_search").click(onSearch);
-            });
-
-            $("#node").change(function () {
-                setNode();
-            });
-
-            function setNode() {
-                var _node = $("#node").val();
-                Credible.setEndpoint("http://" + _node);
-            }
-
-            function generateNewKey() {
-                previous_private = $("#key_private").val();
-
-                /* call to driver */
-                const merchant = Credible.GenerateKey();
-                $("#key_private").val(merchant.privateKey);
-                $("#key_public").val(merchant.publicKey);
-            }
-
-            function onSubmit() {
-                let postData = {
-                    claim: $("#claim").val(),
-                    type: $("#type").val(),
-                    private_key: $("#key_private").val(),
-                    public_key: $("#key_public").val(),
-                }
-                Credible.Submit(postData, function (data) {
-                    $("#claim_hex").text(data.claim_hex);
-                    $("#nonce_hex").text(data.nonce_hex);
-                    $("#sign_id").text(data.sign_id);
-                    $("#txn_id").text(data.txn_id);
-                });
-            }
-            
-            function onTransfer() {
-                $("#txn_id").text("");
-                let postData = {
-                    sign_id: $("#sign_id").text(),
-                    from_private_key: previous_private,
-                    to_public_key: $("#key_public").val(),
-                }
-                Credible.Transfer(postData, function (data) {
-                    $("#sign_id").text(data.sign_id);
-                    $("#txn_id").text(data.txn_id);
-
-                    //assign current private key to be the new previous
-                    previous_private = $("#key_private").val();
-                });
-            }
-
-            function onSearch() {
-                Credible.Search($("#key_public").val(), function (data) {
-                    $("#div_transaction_ids").html('');
-                    for (var i = 0; i < data.length; i++) {
-                        $("#div_transaction_ids").append("<p><a href='javascript:onDetail(\"" + data[i].transaction_id + "\")'>" + data[i].transaction_id + "</a></p>");
-                    }
-                });
-            }
-
-            function onDetail(transaction_id) {
-                Credible.Detail(transaction_id, function (data) {
-                    $("#div_transaction_detail").html("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
-                });
-            }
-        </script>
-    </body>
-</html>
+        
+        <div class="row">
+                <div class="float-left col-sm-7" style="height: 400px;" >
+                        <h3>Last transactions</h3>
+                        <div id="last_transaction" style="height: 100%;border-style: outset;border-color:dodgerblue">
+                        </div>
+                </div>
+                
+                <div class="float-right col-sm-5">
+                        <h3>Page latency</h3>
+                        <p class="box">Round-trip</p>
+                </div>
+                
+                <div class="float-right col-sm-5">
+                        <h3># Of Peers</h3>
+                        <p class="box">credible-1</p>
+                        <p class="box">credible-2</p>
+                        <p class="box">credible-3</p>
+                </div>
+        </div>
+</div>
+</body>
