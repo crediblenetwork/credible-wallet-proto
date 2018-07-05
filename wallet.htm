@@ -57,6 +57,7 @@
         <input type="button" id="btn_submit" value="Post" />
         <input type="button" id="btn_transfer" value="Transfer" />
         <input type="button" id="btn_search" value="Search" />
+        <input type="button" id="btn_tokenBalance" value="Token Balance" />
 
         <p/>
         <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
@@ -94,6 +95,7 @@
                 $("#btn_submit").click(onSubmit);
                 $("#btn_transfer").click(onTransfer);
                 $("#btn_search").click(onSearch);
+                $("#btn_tokenBalance").click(onTokenBalance);
             });
 
             $("#node").change(function () {
@@ -157,6 +159,12 @@
             function onDetail(transaction_id) {
                 Credible.Detail(transaction_id, function (data) {
                     $("#div_transaction_detail").html("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
+                });
+            }
+
+            function onTokenBalance() {
+                Credible.TokenBalance($("#key_public").val(), function (data) {
+                    alert('Token balance: ' + data);
                 });
             }
         </script>

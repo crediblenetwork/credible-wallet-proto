@@ -59,7 +59,14 @@ function onClose(evt)
 function onMessage(evt)
 {
         console.log("onMessage: ", evt);
-        writeToScreen('<a href="#" class="list-group-item"><h4 class="list-group-item-heading">Valid Transaction</h4><p class="list-group-item-text">' + evt.data + '</p></a>');
+		let data = evt.data;
+		try {
+			let json = JSON.parse(evt.data);
+			data = json.transaction_id != undefined ? json.transaction_id : data;
+		} catch (error) {
+			
+		}
+        writeToScreen(data);
 }
 
 function onError(evt)
@@ -76,11 +83,7 @@ function closeConnection(evt)
 
 function writeToScreen(message)
 {
-        // var pre = document.createElement("p");
-        // pre.style.wordWrap = "break-word";
-        // pre.innerHTML = message;
-        // output.appendChild(pre);
-        $("#list_transaction").prepend('<p style="word-wrap: break-word;" >' + message + '</p>')
+        $("#last_transaction").prepend('<p style="word-wrap: break-word;border-bottom:1px solid dodgerblue;margin:3px;margin-left:5px;" >' + message + '</p>');
 }
 
 function writeAlertMessage(message)
@@ -113,9 +116,9 @@ window.addEventListener("beforeunload", closeConnection, false);
         </div>
         
         <div class="row">
-                <div class="float-left col-sm-7" style="height: 400px;" >
+                <div class="float-left col-sm-7" style="height: 500px;" >
                         <h3>Last transactions</h3>
-                        <div id="last_transaction" style="height: 100%;border-style: outset;border-color:dodgerblue">
+                        <div id="last_transaction" style="height: 100%;border-style: outset;border-color:dodgerblue;overflow-y: auto">
                         </div>
                 </div>
                 
