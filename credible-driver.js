@@ -53,6 +53,10 @@ credible_driver.prototype.TokenBalance = function (public_key, callback) {
     this.requestApi("gettokenbalance?public_key=" + public_key, "GET", {}, callback);
 }
 
+credible_driver.prototype.Validators = function (callback) {
+    this.requestApi("getvalidators", "GET", {}, callback);
+}
+
 credible_driver.prototype.GenerateKey = function () {
     return this.Ed25519Keypair();
 }

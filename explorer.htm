@@ -10,129 +10,213 @@
 
 <!-- Latest compiled JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-
+<script type="text/javascript" src="credible-driver.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 <style>
-        .box {
-                border-style: outset;
-                border-color:dodgerblue;
-                height: 40px;
-                line-height: 35px;
-				padding-left: 5px;
-        }
+    .box {
+        height: 40px;
+        line-height: 35px;
+        padding-left: 5px;
+    }
+
+    .block {        
+        height: 100px;
+        padding-left: 5px;
+    }
+
+    .border {
+        border: 2px solid #bdbd00;
+    }
+
+    .fixed-top {
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 1030;
+        position: sticky;
+        background-color: whitesmoke;
+    }
+
+    body {
+       background-color: #3b3c3e;
+       color: #6fbdba;
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 8px;
+        font-size: 16px;
+    }
+
+    tr {
+        border: 2px solid #bdbd00;
+    }
 </style>
 <!-- Websocket Script -->
 <script language="javascript" type="text/javascript">
 
-var wsUri = "ws://credible-1.testnet.smartpesa.com:9985/api/v1/streams/valid_transactions";
-var output;
-var alertbox;
+    var wsUri = "ws://credible-1.testnet.smartpesa.com:9985/api/v1/streams/valid_transactions";
+    var alertbox;
+    $(function() {
+        Credible.setEndpoint('');
+        Credible.Validators(function (data) {
+            console.log(data);
+            addNode(data);
+        });
+    });
 
-function init()
-{
-        output = document.getElementById("output");
+    function addNode(data) {
+        $("#tbl_node > tbody > tr").remove();
+        data.forEach(elm => {
+            $("#tbl_node > tbody").append(`<tr><td>${elm.pub_key.type} - ${elm.pub_key.value}</td></tr>`);
+        });
+    }
+
+    function init()
+    {
         alertbox = document.getElementById("alert-box");
         setWebSocket();
-}
+    }
 
-function setWebSocket()
-{
+    function setWebSocket()
+    {
         websocket = new WebSocket(wsUri);
         websocket.onopen = function(evt) { onOpen(evt) };
         websocket.onclose = function(evt) { onClose(evt) };
         websocket.onmessage = function(evt) { onMessage(evt) };
         websocket.onerror = function(evt) { onError(evt) };
-}
+    }
 
-function onOpen(evt)
-{
+    function onOpen(evt)
+    {
         console.log("onOpen: ", evt);
         writeAlertMessage("CONNECTED");
-}
+    }
 
-function onClose(evt)
-{
+    function onClose(evt)
+    {
         console.log("onClose: ");
         writeAlertMessage("DISCONNECTED");
-}
+    }
 
-function onMessage(evt)
-{
+    function onMessage(evt)
+    {
         console.log("onMessage: ", evt);
-		let data = evt.data;
-		try {
-			let json = JSON.parse(evt.data);
-			data = json.transaction_id != undefined ? json.transaction_id : data;
-		} catch (error) {
-			
-		}
+        let data = evt.data;
+        try {
+            let json = JSON.parse(evt.data);
+            data = json.transaction_id != undefined ? json.transaction_id : data;
+        } catch (error) {
+                
+        }
         writeToScreen(data);
-}
+    }
 
-function onError(evt)
-{
+    function onError(evt)
+    {
         console.log("onError: ", evt);
         writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
-}
+    }
 
-function closeConnection(evt)
-{
+    function closeConnection(evt)
+    {
         console.log("closeConnection: ", evt);
         websocket.close()
-}
+    }
 
-function writeToScreen(message)
-{
-        $("#last_transaction").prepend('<p style="word-wrap: break-word;border-bottom:1px solid dodgerblue;margin:3px;margin-left:5px;" >' + message + '</p>');
-}
+    function writeToScreen(message)
+    {        
+        if ($("#tbl_last_transactions > tbody > tr").length >= 10) {
+            $('#tbl_last_transactions tr:last').remove();
+        }
+        $("#tbl_last_transactions > tbody").prepend(`<tr><td>${message}</td></tr>`);
+    }
 
-function writeAlertMessage(message)
-{
-        var alert = document.createElement("div");
-        alert.className = "alert alert-success";
-        alert.setAttribute("role", "alert");
-        alert.innerHTML = message;
-        alertbox.appendChild(alert);
-}
+    function writeAlertMessage(message)
+    {
+        $('#alert-box').html(message);
+    }
 
-/* Initialize websocket and attach all events */
-window.addEventListener("load", init, false);
+    /* Initialize websocket and attach all events */
+    window.addEventListener("load", init, false);
 
-/* Event called on closing browser or refreshing page to close connection */
-window.addEventListener("beforeunload", closeConnection, false);
+    /* Event called on closing browser or refreshing page to close connection */
+    window.addEventListener("beforeunload", closeConnection, false);
 
 </script>
 
 <!-- HTML Template -->
 <body>
-<div class="container" style="height: 100%;">
-        <div class="row">
-                <img class="logo logo-dark" alt="logo" src="images/logo.png">
-                <h3>Credible Valid Transactions</h3>
-                <!-- Box for displaying all alerts -->
-                <div id="alert-box"></div>
-                <!-- Div for attachting all outputs -->
-                <div id="output" class="list-group"></div>
+    <div class="container" style="height: 100%;width: 100%;">
+        <div class="row fixed-top">
+                <img class="logo logo-dark" style="margin: 5px; margin-left: 10px; " alt="logo" src="images/logo.png">
         </div>
         
-        <div class="row">
-                <div class="float-left col-sm-7" style="height: 500px;" >
-                        <h3>Last transactions</h3>
-                        <div id="last_transaction" style="height: 100%;border-style: outset;border-color:dodgerblue;overflow-y: auto">
+        <div class="row" style="margin-top: 20px;">
+            <!-- Box for displaying all alerts -->
+            <div class="col-sm-12">
+                <div class="float-left col-sm-6">
+                    <h3>Credible Valid Transactions</h3>
+                    <div id='alert-box' class="box border alert-success" role="alert">
+                    </div>
+                </div>
+                <div class="float-left col-sm-3">
+                    <div class="block border">
+                        <div class="float-left col-sm-3">
+                            <i class="fa fa-cloud-download card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
                         </div>
+                        <div class="float-right">
+                            <h3 class="text-center">Page latency</h3>
+                            <p class="text-center">Round-trip</p>
+                        </div>
+                    </div>
                 </div>
+                <div class="float-right col-sm-3">
+                    <div class="block border">
+                        <div class="float-left col-sm-3">
+                            <i class="fa fa-braille card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
+                        </div>
+                        <div class="float-right">
+                            <h3 class="text-center"># of Transactions</h3>
+                            <p class="text-center">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
                 
-                <div class="float-right col-sm-5">
-                        <h3>Page latency</h3>
-                        <p class="box">Round-trip</p>
+            <div class="col-sm-12">                    
+                <div class="float-left col-sm-6">
+                    <h3>Last Transactions</h3>
+                    <div>
+                        <table id="tbl_last_transactions" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="border: #bdbd00;" class="border text-center">Transaction Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                
-                <div class="float-right col-sm-5">
-                        <h3># Of Peers</h3>
-                        <p class="box">credible-1</p>
-                        <p class="box">credible-2</p>
-                        <p class="box">credible-3</p>
+        
+                <div class="float-right col-sm-6">
+                    <h3># Of Peers</h3>
+                    <div>
+                        <table id="tbl_node" class="table table-bordered">
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+            </div>
         </div>
-</div>
+    </div>
 </body>
