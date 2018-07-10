@@ -65,7 +65,7 @@
     var wsUri = "ws://credible-1.testnet.smartpesa.com:9985/api/v1/streams/valid_transactions";
     var alertbox;
     $(function() {
-        Credible.setEndpoint('');
+        Credible.setEndpoint('http://credible-1.testnet.smartpesa.com/');
         Credible.Validators(function (data) {
             console.log(data);
             addNode(data);
