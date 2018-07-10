@@ -12,59 +12,140 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script type="text/javascript" src="credible-driver.js"></script>
         <script type="text/javascript" src="secrets.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+        <style>
+            .fixed-top {
+                top: 0;
+                right: 0;
+                left: 0;
+                z-index: 1030;
+                position: sticky;
+                background-color: whitesmoke;
+            }
+            
+            .full-width {
+                margin: 0 auto;
+                width: 80% !important;
+            }
+        </style>
     </head>
     <body>
-        <h1 style="margin-bottom:-8px;">SmartPesa Credible</h1>
-        <a href="www.smartpesa.io"><small>www.smartpesa.io</small></a>
+        <div class="container" style="height: 100%;width: 100%;">
+            <div class="row fixed-top">
+                    <a href="https://smartpesa.io">
+                        <img class="logo logo-dark" style="margin: 5px; margin-left: 10px; " alt="logo" src="images/logo.png">
+                    </a>
+            </div>
+        
+            <div class="row" style="margin-top: 20px;">
+                <div class="col-sm-12">
+                    <div class="float-left col-sm-4">
+                        <h3>Wallet Generator</h3>
+                        <div class="form-group">
+                            <label class="control-label">Private Key:</label>
+                            <input type="text" class="form-control" id="key_private" value="8p8sk3ZQ2XKwp7PTSxDSC99j33pdo48Z8g6AJE5fF5An"/>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Public Key:</label>
+                            <input type="text" class="form-control" id="key_public" value="9U95xGb6E2hendFE2F4aGvX5vrepYrht8LFjkVyaazdM"/>
+                        </div>
+                        <div class="form-group">
+                            <input type="button" class="btn btn-default" id="btn_generate" value="Generate New" />
+                        </div>
+                    </div>
+                    <div class="float-right col-sm-8">
+                        <h3>Data Post</h3>
+                        <div class="form-group form-inline">
+                            <select name="schema" class="form-control">
+                                <option value="business">business</option>
+                                <option value="address">address</option>
+                            </select>
+                            <select id="type" class="form-control">
+                                <option value="business.name">business.name</option>
+                                <option value="business.registered_name">business.registered_name</option>
+                                <option value="business.trading_name">business.trading_name</option>
+                                <option value="business.tax.code">business.tax.code</option>
+                                <option value="business.tax.enrol_date">business.tax.enrol_date</option>
+                            </select>
+                            <input type="text" class="form-control" id="claim" value="Founders Bakuteh"/>
+                        </div>
+                        <div class="form-group form-inline">
+                            <label class="control-label">Node:</label>
+                            <select name="node" id="node" class="form-control">
+                                <option value="credible-1.testnet.smartpesa.com">credible-1.testnet.smartpesa.com</option>
+                                <option value="credible-2.testnet.smartpesa.com">credible-2.testnet.smartpesa.com</option>
+                                <option value="credible-3.testnet.smartpesa.com">credible-3.testnet.smartpesa.com</option>
+                            </select>
+                            <input type="button" class="btn btn-default" id="btn_submit" value="Post to blockchain" />
+                            <input type="button" class="btn btn-default" id="btn_transfer" value="Transfer on blockchain" />
+                        </div>
+                        <div class="form-group">
+                                <div class="form-group">
+                            <label class="control-label">Output:</label>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" style="padding-left:10px;">Claim: </label>
+                                <span class="" id="claim_hex"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" style="padding-left:10px;">Nonce:</label>
+                                <span class="" id="nonce_hex"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" style="padding-left:10px;">Sign ID:</label>
+                                <span class="" id="sign_id"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" style="padding-left:10px;">Txn ID:</label>
+                                <span class="" id="txn_id"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="float-left col-sm-4">
+                        <h3>Token Balance</h3>
+                        <div class="form-group form-inline">
+                            <label class="control-label">Wallet Token Balance:</label>
+                            <span class="control-label" id="token_balance"></span>&nbsp;PESA
+                        </div>
+                        <div class="form-group">
+                            <input type="button" class="btn btn-default" id="btn_tokenBalance" value="Update Balance PESA" />
+                        </div>
+                    </div>
+                    <div class="float-right col-sm-8">
+                        <h3>Search</h3>
+                        <div class="form-group form-inline">
+                            <label class="control-label">Meta data:</label>       
+                            <input type="text" class="form-control" id="search_metadata" value=""/>
+                        </div>
+                        <div class="form-group form-inline">
+                            <input type="button" class="btn btn-default" id="btn_transfer" value="Search by meta-data" />
+                            <input type="button" class="btn btn-default" id="btn_search" value="Search by public key" />
+                        </div>
+                        <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="float-left col-sm-4">
+                        <h3>Transaction id list</h3>
+                        <div class="form-group">
+                                <div id="div_transaction_ids"></div>
+                        </div>
+                    </div>
+                    <div class="float-right col-sm-8">
+                        <h3>Transaction detail</h3>
+                        <div class="form-group">
+                            <div id="div_transaction_detail"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <h3>Wallet Generator</h3>
-        Private Key: <input type="text" id="key_private" size="55" value="8p8sk3ZQ2XKwp7PTSxDSC99j33pdo48Z8g6AJE5fF5An"/><br/>
-        Public Key:&nbsp; <input type="text" id="key_public" size="50" value="9U95xGb6E2hendFE2F4aGvX5vrepYrht8LFjkVyaazdM"/>
-    
-        <p />
-        <input type="button" id="btn_generate" value="Generate New" />
-
-        <h3>Data Post</h3>
-
-        <select name="schema">
-            <option value="business">business</option>
-            <option value="address">address</option>
-        </select>
-        <select id="type">
-            <option value="business.name">business.name</option>
-            <option value="business.registered_name">business.registered_name</option>
-            <option value="business.trading_name">business.trading_name</option>
-            <option value="business.tax.code">business.tax.code</option>
-            <option value="business.tax.enrol_date">business.tax.enrol_date</option>
-        </select>
-        <input type="text" id="claim" size="30" value="Founders Bakuteh"/>
-        <p>
-        Output: <i><br/>
-            &nbsp;&nbsp;Claim: <span id="claim_hex"></span><br />
-            &nbsp;&nbsp;Nonce: <span id="nonce_hex"></span>    
-            </i>
-        </p>
-
-        Sign ID: <i><span id="sign_id"></span></i><br/>
-        Txn ID: <i><span id="txn_id"></span></i>
         <p/>
-        Node:
-        <select name="node" id="node">
-            <option value="credible-1.testnet.smartpesa.com">credible-1.testnet.smartpesa.com</option>
-            <option value="credible-2.testnet.smartpesa.com">credible-2.testnet.smartpesa.com</option>
-            <option value="credible-3.testnet.smartpesa.com">credible-3.testnet.smartpesa.com</option>
-        </select>
-        <input type="button" id="btn_submit" value="Post" />
-        <input type="button" id="btn_transfer" value="Transfer" />
-        <input type="button" id="btn_search" value="Search" />
-        <input type="button" id="btn_tokenBalance" value="Token Balance" />
-
-        <p/>
-        <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
         <div style="width:100%;">
-            <h2 style="float:left;width:40%;">Transaction id list</h2>
-            <h2 style="float:right;width:60%;">Transaction detail</h2>
-            <div id="div_transaction_ids" style="clear: both;float:left;width:40%;"></div>
             <div id="div_transaction_detail" style="float:right;width:60%;"></div>
         </div>
 
@@ -164,7 +245,8 @@
 
             function onTokenBalance() {
                 Credible.TokenBalance($("#key_public").val(), function (data) {
-                    alert('Token balance: ' + data);
+                    console.log(`Token balance: ${data}`);
+                    $('#token_balance').text(data.toLocaleString());
                 });
             }
         </script>
