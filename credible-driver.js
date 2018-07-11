@@ -42,19 +42,27 @@ credible_driver.prototype.Transfer = function (postData, callback) {
 }
 
 credible_driver.prototype.Search = function (public_key, callback) {
-    this.requestApi("search?public_key=" + public_key, "GET", {}, callback);
+    this.requestApi(`search?public_key=${public_key}`, "GET", {}, callback);
 }
 
 credible_driver.prototype.Detail = function (transaction_id, callback) {
-    this.requestApi("gettransaction?transaction_id=" + transaction_id, "GET", {}, callback);
+    this.requestApi(`gettransaction?transaction_id=${transaction_id}`, "GET", {}, callback);
 }
 
 credible_driver.prototype.TokenBalance = function (public_key, callback) {
-    this.requestApi("gettokenbalance?public_key=" + public_key, "GET", {}, callback);
+    this.requestApi(`gettokenbalance?public_key=${public_key}`, "GET", {}, callback);
 }
 
 credible_driver.prototype.Validators = function (callback) {
     this.requestApi("getvalidators", "GET", {}, callback);
+}
+
+credible_driver.prototype.Version = function (callback) {
+    this.requestApi("getversion", "GET", {}, callback);
+}
+
+credible_driver.prototype.SearchMetadata = function (metadata, callback) {
+    this.requestApi(`searchmetadata?metadata=${metadata}`, "GET", {}, callback);
 }
 
 credible_driver.prototype.GenerateKey = function () {

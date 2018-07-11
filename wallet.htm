@@ -121,7 +121,7 @@
                             <input type="text" class="form-control" id="search_metadata" value=""/>
                         </div>
                         <div class="form-group form-inline">
-                            <input type="button" class="btn btn-default" id="btn_transfer" value="Search by meta-data" />
+                            <input type="button" class="btn btn-default" id="btn_search_metadata" value="Search by meta-data" />
                             <input type="button" class="btn btn-default" id="btn_search" value="Search by public key" />
                         </div>
                         <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
@@ -177,6 +177,7 @@
                 $("#btn_transfer").click(onTransfer);
                 $("#btn_search").click(onSearch);
                 $("#btn_tokenBalance").click(onTokenBalance);
+                $("#btn_search_metadata").click(onSearchMetadata);
             });
 
             $("#node").change(function () {
@@ -247,6 +248,15 @@
                 Credible.TokenBalance($("#key_public").val(), function (data) {
                     console.log(`Token balance: ${data}`);
                     $('#token_balance').text(data.toLocaleString());
+                });
+            }
+
+            function onSearchMetadata() {
+                Credible.SearchMetadata($("#search_metadata").val(), function (data) {
+                    $("#div_transaction_ids").html('');                    
+                    data.forEach(elm => {
+                        $("#div_transaction_ids").append("<p><a href='javascript:onDetail(\"" + elm.id + "\")'>" + elm.id + "</a></p>");
+                    });
                 });
             }
         </script>

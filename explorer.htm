@@ -27,7 +27,7 @@
     }
 
     .border {
-        border: 2px solid #bdbd00;
+        border: 2px solid #d6e9c6;
     }
 
     .fixed-top {
@@ -40,8 +40,7 @@
     }
 
     body {
-       background-color: #3b3c3e;
-       color: #6fbdba;
+       color: dimgray;
     }
     
     table {
@@ -56,7 +55,7 @@
     }
 
     tr {
-        border: 2px solid #bdbd00;
+        border: 2px solid #d6e9c6;
     }
 </style>
 <!-- Websocket Script -->
@@ -69,6 +68,11 @@
         Credible.Validators(function (data) {
             console.log(data);
             addNode(data);
+        });
+        let current_timestamp = new Date().getTime();        
+        Credible.Version(function (data) {
+            console.log(data);
+            $('#page_latency').text(`${Math.round((data.timestamp - current_timestamp) / 1000)}s`);
         });
     });
 
@@ -164,28 +168,34 @@
             <div class="col-sm-12">
                 <div class="float-left col-sm-6">
                     <h3>Credible Valid Transactions</h3>
-                    <div id='alert-box' class="box border alert-success" role="alert">
+                    <div id='alert-box' class="alert alert-success" role="alert">
                     </div>
                 </div>
                 <div class="float-left col-sm-3">
                     <div class="block border">
                         <div class="float-left col-sm-3">
-                            <i class="fa fa-cloud-download card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
+                            <i class="fa fa-hourglass-end card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
                         </div>
                         <div class="float-right">
-                            <h3 class="text-center">Page latency</h3>
-                            <p class="text-center">Round-trip</p>
+                            <div class="form-group">
+                                <h3 class="text-center">Page latency</h3>
+                                <p class="text-center">Round-trip:
+                                    <span id="page_latency"></span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="float-right col-sm-3">
                     <div class="block border">
                         <div class="float-left col-sm-3">
-                            <i class="fa fa-braille card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
+                            <i class="fa fa-bars card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
                         </div>
                         <div class="float-right">
-                            <h3 class="text-center"># of Transactions</h3>
-                            <p class="text-center">0</p>
+                            <h3 class="text-center">Block Height</h3>
+                            <p class="text-center">
+                                <span id="block_height">0</span>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -198,7 +208,7 @@
                         <table id="tbl_last_transactions" class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <th style="border: #bdbd00;" class="border text-center">Transaction Hash</th>
+                                    <th style="border: #d6e9c6;" class="border text-center">Transaction Hash</th>
                                 </tr>
                             </thead>
                             <tbody>
