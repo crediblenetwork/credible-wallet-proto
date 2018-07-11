@@ -12,8 +12,9 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script type="text/javascript" src="credible-driver.js"></script>
         <script type="text/javascript" src="secrets.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+        <script type="text/javascript" src="ed2curve.min.js"></script>
+        <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>   
+        <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
         <style>
             .fixed-top {
                 top: 0;
@@ -34,11 +35,11 @@
         <div class="container" style="height: 100%;width: 100%;">
             <div class="row fixed-top">
                     <a href="https://smartpesa.io">
-                        <img class="logo logo-dark" style="margin: 5px; margin-left: 10px; " alt="logo" src="images/logo.png">
+                        <img class="logo logo-dark" style="margin: 5px; margin-left: 10px; " alt="logo" src="https://files.smartpesa.io/public/Credible.png" width="240">
                     </a>
             </div>
         
-            <div class="row" style="margin-top: 20px;">
+            <div class="row" style="margin-top: 10px;">
                 <div class="col-sm-12">
                     <div class="float-left col-sm-4">
                         <h3>Wallet Generator</h3>
@@ -56,6 +57,7 @@
                     </div>
                     <div class="float-right col-sm-8">
                         <h3>Data Post</h3>
+                        <label class="control-label">New Credit Data:</label>
                         <div class="form-group form-inline">
                             <select name="schema" class="form-control">
                                 <option value="business">business</option>
@@ -108,34 +110,45 @@
                         <h3>Token Balance</h3>
                         <div class="form-group form-inline">
                             <label class="control-label">Wallet Token Balance:</label>
-                            <span class="control-label" id="token_balance"></span>&nbsp;PESA
+                            <span class="control-label" id="token_balance">0</span>&nbsp;PESA
                         </div>
                         <div class="form-group">
-                            <input type="button" class="btn btn-default" id="btn_tokenBalance" value="Update Balance PESA" />
+                            <input type="button" class="btn btn-default" id="btn_tokenBalance" value="Retrieve Balance PESA" />
                         </div>
                     </div>
                     <div class="float-right col-sm-8">
+                        <h3>Encryption</h3>
+                        <div class="form-group form-inline">
+                            <label class="control-label">Result:</label>
+                            <span class="control-label" id="encrypt_result"></span>
+                        </div>
+                        <input type="button" class="btn btn-default" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()" />
+                        <input type="button" class="btn btn-default" id="btn_convert" value="Convert To Curve25519" onclick="JavaScript:edToCurve()" />
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="float-left col-sm-4">
                         <h3>Search</h3>
                         <div class="form-group form-inline">
-                            <label class="control-label">Meta data:</label>       
-                            <input type="text" class="form-control" id="search_metadata" value=""/>
+                            <label class="control-label">Meta data:</label>
+                            <input type="text" class="form-control" id="search_metadata" value="" />
                         </div>
                         <div class="form-group form-inline">
                             <input type="button" class="btn btn-default" id="btn_search_metadata" value="Search by meta-data" />
                             <input type="button" class="btn btn-default" id="btn_search" value="Search by public key" />
                         </div>
-                        <input type="button" id="btn_encrypt" value="Shamir" onclick="JavaScript:shamir()"/>
                     </div>
                 </div>
+
                 <div class="col-sm-12">
                     <div class="float-left col-sm-4">
-                        <h3>Transaction id list</h3>
+                        <h3>Transaction ID List</h3>
                         <div class="form-group">
                                 <div id="div_transaction_ids"></div>
                         </div>
                     </div>
                     <div class="float-right col-sm-8">
-                        <h3>Transaction detail</h3>
+                        <h3>Transaction Detail</h3>
                         <div class="form-group">
                             <div id="div_transaction_detail"></div>
                         </div>
@@ -158,10 +171,41 @@
                 var shares = secrets.share(pwHex, 3, 2, 256);   // 3 x 256-bit shares
 
                 var comb = secrets.combine([shares[1], shares[2]]);
-                comb = secrets.hex2str(comb);
+                decrypt = secrets.hex2str(comb);
 
-                console.log(comb === pw);   // should return true
+                $("#encrypt_result").text(comb + ' = ' + decrypt);
             }
+
+            function edToCurve() {
+                // But first, we need to convert our secret key and their public key
+                // from Ed25519 into the format accepted by Curve25519.
+
+                var ed_private_key = $("#key_private").val();
+                var curve_private_key = ed2curve.convertSecretKey(ed_private_key);
+
+                var ed_public_key =  $("#key_public").val();
+                var curve_public_key = ed2curve.convertPublicKey(ed_public_key);
+
+                var key = _arrayBufferToBase64(curve_public_key);
+                $("#encrypt_result").text(key);
+
+                var _nonce = 'oneTIMEnonce';
+                var _claim = $("#claim").val();
+                var _claim_encode = secrets.str2hex(_claim);
+                //var encryptedMessage = nacl.box(_claim_encode, _nonce, curve_public_key, curve_private_key);
+            }
+
+            function _arrayBufferToBase64(buffer) {
+                var binary = '';
+                var bytes = new Uint8Array(buffer);
+                var len = bytes.byteLength;
+                for (var i = 0; i < len; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return window.btoa(binary);
+            }
+
+
         </script>
 
         <script>
