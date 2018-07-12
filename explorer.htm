@@ -21,7 +21,7 @@
         padding-left: 5px;
     }
 
-    .block {        
+    .block {
         height: 100px;
         padding-left: 5px;
     }
@@ -40,22 +40,35 @@
     }
 
     body {
-       color: dimgray;
+        color: dimgray;
     }
-    
+
     table {
         border-collapse: collapse;
         width: 100%;
+        table-layout: fixed;
     }
 
     th, td {
         text-align: left;
         padding: 8px;
         font-size: 16px;
+        word-wrap: break-word;
     }
 
     tr {
         border: 2px solid #d6e9c6;
+    }
+
+    .left {
+        float: left;
+        width: 100px;
+    }
+
+    .right {
+        float: right;
+        width: calc(100% - 100px);
+
     }
 </style>
 <!-- Websocket Script -->
@@ -63,13 +76,13 @@
 
     var wsUri = "ws://credible-1.testnet.smartpesa.com:9985/api/v1/streams/valid_transactions";
     var alertbox;
-    $(function() {
+    $(function () {
         Credible.setEndpoint('http://credible-1.testnet.smartpesa.com/');
         Credible.Validators(function (data) {
             console.log(data);
             addNode(data);
         });
-        let current_timestamp = new Date().getTime();        
+        let current_timestamp = new Date().getTime();
         Credible.Version(function (data) {
             console.log(data);
             $('#page_latency').text(`${Math.round((data.timestamp - current_timestamp) / 1000)}s`);
@@ -83,68 +96,59 @@
         });
     }
 
-    function init()
-    {
+    function init() {
         alertbox = document.getElementById("alert-box");
         setWebSocket();
     }
 
-    function setWebSocket()
-    {
+    function setWebSocket() {
         websocket = new WebSocket(wsUri);
-        websocket.onopen = function(evt) { onOpen(evt) };
-        websocket.onclose = function(evt) { onClose(evt) };
-        websocket.onmessage = function(evt) { onMessage(evt) };
-        websocket.onerror = function(evt) { onError(evt) };
+        websocket.onopen = function (evt) { onOpen(evt) };
+        websocket.onclose = function (evt) { onClose(evt) };
+        websocket.onmessage = function (evt) { onMessage(evt) };
+        websocket.onerror = function (evt) { onError(evt) };
     }
 
-    function onOpen(evt)
-    {
+    function onOpen(evt) {
         console.log("onOpen: ", evt);
         writeAlertMessage("CONNECTED");
     }
 
-    function onClose(evt)
-    {
+    function onClose(evt) {
         console.log("onClose: ");
         writeAlertMessage("DISCONNECTED");
     }
 
-    function onMessage(evt)
-    {
+    function onMessage(evt) {
         console.log("onMessage: ", evt);
         let data = evt.data;
         try {
             let json = JSON.parse(evt.data);
             data = json.transaction_id != undefined ? json.transaction_id : data;
         } catch (error) {
-                
+
         }
         writeToScreen(data);
     }
 
-    function onError(evt)
-    {
+    function onError(evt) {
         console.log("onError: ", evt);
         writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
     }
 
-    function closeConnection(evt)
-    {
+    function closeConnection(evt) {
         console.log("closeConnection: ", evt);
         websocket.close()
     }
 
-    function writeToScreen(message)
-    {        
+    function writeToScreen(message) {
         if ($("#tbl_last_transactions > tbody > tr").length >= 10) {
             $('#tbl_last_transactions tr:last').remove();
         }
         $("#tbl_last_transactions > tbody").prepend(`<tr><td>${message}</td></tr>`);
     }
 
-    function writeAlertMessage(message)
-    {
+    function writeAlertMessage(message) {
         $('#alert-box').html(message);
     }
 
@@ -157,12 +161,15 @@
 </script>
 
 <!-- HTML Template -->
+
 <body>
     <div class="container" style="height: 100%;width: 100%;">
         <div class="row fixed-top">
-                <img class="logo logo-dark" style="margin: 5px; margin-left: 10px; " alt="logo" src="images/logo.png">
+            <a href="https://smartpesa.io">
+                <img class="logo logo-dark" style="margin: 5px; margin-left: 10px; " alt="logo" src="https://files.smartpesa.io/public/Credible.png" width="240">
+            </a>
         </div>
-        
+
         <div class="row" style="margin-top: 20px;">
             <!-- Box for displaying all alerts -->
             <div class="col-sm-12">
@@ -173,25 +180,23 @@
                 </div>
                 <div class="float-left col-sm-3">
                     <div class="block border">
-                        <div class="float-left col-sm-3">
-                            <i class="fa fa-hourglass-end card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
+                        <div class="left text-center">
+                            <i class="fa fa-hourglass-end card-icon" style="font-size:64px;margin: 15px;"></i>
                         </div>
-                        <div class="float-right">
-                            <div class="form-group">
-                                <h3 class="text-center">Page latency</h3>
-                                <p class="text-center">Round-trip:
-                                    <span id="page_latency"></span>
-                                </p>
-                            </div>
+                        <div class="right">
+                            <h3 class="text-center">Page latency</h3>
+                            <p class="text-center">Round-trip:
+                                <span id="page_latency"></span>
+                            </p>
                         </div>
                     </div>
                 </div>
                 <div class="float-right col-sm-3">
                     <div class="block border">
-                        <div class="float-left col-sm-3">
-                            <i class="fa fa-bars card-icon" style="font-size:64px;padding: 15px 0px 15px 0px;"></i>
+                        <div class="left text-center">
+                            <i class="fa fa-bars card-icon" style="font-size:64px;margin: 15px;"></i>
                         </div>
-                        <div class="float-right">
+                        <div class="right">
                             <h3 class="text-center">Block Height</h3>
                             <p class="text-center">
                                 <span id="block_height">0</span>
@@ -200,8 +205,8 @@
                     </div>
                 </div>
             </div>
-                
-            <div class="col-sm-12">                    
+
+            <div class="col-sm-12">
                 <div class="float-left col-sm-6">
                     <h3>Last Transactions</h3>
                     <div>
@@ -216,7 +221,7 @@
                         </table>
                     </div>
                 </div>
-        
+
                 <div class="float-right col-sm-6">
                     <h3># Of Peers</h3>
                     <div>
