@@ -85,7 +85,7 @@
         let current_timestamp = new Date().getTime();
         Credible.Version(function (data) {
             console.log(data);
-            $('#page_latency').text(`${Math.round((data.timestamp - current_timestamp) / 1000)}s`);
+            $('#page_latency').text(`${Math.round((new Date().getTime() - current_timestamp))}ms`);
         });
     });
 
@@ -226,6 +226,11 @@
                     <h3># Of Peers</h3>
                     <div>
                         <table id="tbl_node" class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="border: #d6e9c6;" class="border text-center">Validator ID- Public Key</th>
+                                </tr>
+                            </thead>
                             <tbody>
                             </tbody>
                         </table>
