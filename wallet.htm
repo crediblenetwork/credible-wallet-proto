@@ -250,7 +250,7 @@
                     public_key: $("#key_public").val(),
                 }
                 Credible.Submit(postData, function (data) {
-                    $("#claim_hex").text(data.claim_hex);
+                    $("#claim_hex").text(data.claim);
                     $("#nonce_hex").text(data.nonce_hex);
                     $("#sign_id").text(data.sign_id);
                     $("#txn_id").text(data.txn_id);

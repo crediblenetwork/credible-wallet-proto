@@ -68,8 +68,13 @@
     .right {
         float: right;
         width: calc(100% - 100px);
-
     }
+
+    .modal-content {
+        width: 210%;
+        margin-left: -55%; 
+    }
+
 </style>
 <!-- Websocket Script -->
 <script language="javascript" type="text/javascript">
@@ -145,11 +150,19 @@
         if ($("#tbl_last_transactions > tbody > tr").length >= 10) {
             $('#tbl_last_transactions tr:last').remove();
         }
-        $("#tbl_last_transactions > tbody").prepend(`<tr><td>${message}</td></tr>`);
+        $("#tbl_last_transactions > tbody").prepend(`<tr><td><a href="javascript:onDetail('${message}')">${message}</a></td></tr>`);
     }
 
     function writeAlertMessage(message) {
         $('#alert-box').html(message);
+    }
+
+    function onDetail(transaction_id) {
+        $("#txnModal div.modal-body").html('');
+        Credible.Detail(transaction_id, function (data) {
+            $("#txnModal div.modal-body").html("<pre>" + JSON.stringify(data, null, 4) + "</pre>");
+            $('#txnModal').modal('toggle');
+        });
     }
 
     /* Initialize websocket and attach all events */
@@ -237,6 +250,24 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="txnModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+	        <!-- Modal content-->
+	        <div class="modal-content">
+	            <div class="modal-header">
+	            	<button type="button" class="close" data-dismiss="modal">&times;</button>
+		            <h4 class="modal-title">Transaction detail</h4>
+	            </div>
+	            <div class="modal-body">
+	            </div>
+	            <div class="modal-footer">
+	    	        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	            </div>
+	        </div>    
         </div>
     </div>
 </body>
